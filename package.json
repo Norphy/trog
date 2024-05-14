@@ -1,0 +1,28 @@
+{
+  "name": "trog",
+  "bin": {
+    "trog": "./dist/index.js"
+  },
+  "version": "0.0.1",
+  "description": "Log analyzer cli app",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "build": "npx tsc",
+    "test": "trog test"
+  },
+  "keywords": [
+    "trog"
+  ],
+  "author": "Omar Orphy",
+  "license": "ISC",
+  "dependencies": {
+    "commander": "^12.0.0",
+    "mz": "^2.7.0",
+    "typescript": "^5.4.5"
+  },
+  "devDependencies": {
+    "@types/mz": "^2.7.8",
+    "@types/node": "^20.12.7"
+  }
+}
