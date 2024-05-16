@@ -31,6 +31,18 @@ program
       .catch((error) => {
         console.log(`Error occured: ${error}`);
       });
-  });
 
+    if (opts.follow) {
+      fileInteractor
+        .keepWatchFile(argumentOne, opts.encoding)
+        .then((eventEmitter) => {
+          eventEmitter.on("change", (readBytes) => {
+            console.log(readBytes);
+          });
+        })
+        .catch((error) => {
+          console.log(`Error occured: ${error}`);
+        });
+    }
+  });
 program.parse(process.argv);
