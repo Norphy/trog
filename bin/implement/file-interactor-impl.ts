@@ -1,5 +1,6 @@
 import { fs } from "mz";
 import { FileInteractor } from "./file-interactor";
+import EventEmitter from "events";
 
 export class FileInteractorImpl implements FileInteractor {
   constructor() {}
@@ -7,7 +8,7 @@ export class FileInteractorImpl implements FileInteractor {
   /**
    * Read the last `n` lines of a file. This is inspired by https://github.com/alexbbt/read-last-lines
    * @param  {string}   input_file_path - File path to be read
-   * @param  {int}      maxLineCount    - Max number of lines to read in. (Entire document if n larger than lines in file)
+   * @param  {int}      maxLineCount    - Max number of lines to resad in. (Entire document if n larger than lines in file)
    * @param  {encoding} encoding        - Specifies the character encoding to be used, or 'buffer'. defaults to 'utf8'.
    *
    * @return {promise}  a promise resolved with the lines or rejected with an error.
@@ -74,5 +75,39 @@ export class FileInteractorImpl implements FileInteractor {
       return Buffer.from(lines, "binary").toString(encoding);
     }
     throw new Error("Invalid encoding passed as argument.");
+  }
+
+  async keepWatchFile(
+    pathToFile: string,
+    encoding: string | BufferEncoding
+  ): Promise<EventEmitter> {
+    const eventEmitter = new EventEmitter();
+    fs.watchFile(pathToFile, (curr, prev) => {
+      if (curr.size === prev.size) {
+        return;
+      }
+      const fileDesc = fs.openSync(pathToFile, "r");
+      const newBytes = curr.size - prev.size;
+      const bufferNewBytes = Buffer.alloc(newBytes);
+      fs.readSync(fileDesc, bufferNewBytes, 0, newBytes, prev.size);
+      let result: string | Buffer;
+      if (encoding === "buffer") {
+        result = bufferNewBytes;
+      }
+      if (Buffer.isEncoding(encoding)) {
+        result = bufferNewBytes.toString(encoding);
+      } else {
+        throw new Error("Invalid encoding passed as option.");
+      }
+      fs.closeSync(fileDesc);
+      eventEmitter.emit(result);
+    });
+
+    // catches ctrl+c event
+    process.on("SIGINT", () => {
+      fs.unwatchFile(pathToFile);
+      eventEmitter.removeAllListeners("change");
+    });
+    return eventEmitter;
   }
 }
