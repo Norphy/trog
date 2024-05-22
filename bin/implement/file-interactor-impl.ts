@@ -1,6 +1,8 @@
-import { fs } from "mz";
-import { FileInteractor } from "./file-interactor";
+import pkg from "mz";
+const { fs, readline } = pkg;
+import { FileInteractor, FindFileObject } from "./file-interactor";
 import EventEmitter from "events";
+import chalk from "chalk";
 
 export class FileInteractorImpl implements FileInteractor {
   constructor() {}
@@ -110,4 +112,33 @@ export class FileInteractorImpl implements FileInteractor {
     });
     return eventEmitter;
   }
+
+  async findInFile(
+    filePath: string,
+    searchText: string
+  ): Promise<FindFileObject> {
+    return await this.getText(filePath, searchText);
+  }
+
+  getText = async function (
+    filePath: string,
+    search: string
+  ): Promise<FindFileObject> {
+    const findFileObject: FindFileObject = { fileContent: [], lineNumbers: [] };
+    const inputStream = fs.createReadStream(filePath);
+    const readLineInt = readline.createInterface({ input: inputStream });
+    let lineCount = 0;
+    for await (const line of readLineInt) {
+      const indOfSearch = line.indexOf(search);
+      if (indOfSearch !== -1) {
+        findFileObject.lineNumbers.push(lineCount);
+        const newLine = line.replace(search, chalk.bold.yellow(search));
+        findFileObject.fileContent.push(chalk.bold.red(`${lineCount}:`) + newLine);
+      } else {
+        findFileObject.fileContent.push(chalk.bold.red(`${lineCount}:`) + line);
+      }
+      lineCount++;
+    }
+    return findFileObject;
+  };
 }

@@ -4,6 +4,11 @@ import { program } from "commander";
 import { FileInteractor } from "./implement/file-interactor.js";
 import { FileInteractorImpl } from "./implement/file-interactor-impl.js";
 
+import pkg from "blessed";
+import { UI } from "./implement/UI/ui.js";
+import { UIImpl } from "./implement/UI/ui-impl.js";
+const { screen, box, log } = pkg;
+
 program.version("0.0.1").description("Log Analyzer Cli App");
 
 program
@@ -45,4 +50,45 @@ program
         });
     }
   });
+
+program
+  .command("find")
+  .description("Reads bottom N lines of a file (Contains follow option).")
+  .argument("<file>", "File path of the file to search for text.")
+  .argument("<searchText>", "Text which we would like to find in the file.")
+  // .argument("<file>", "File path of the file to search for text.")
+  .option(
+    "-A, --After-value <value>",
+    "Number of lines to be printed after finding target. Default: 5 lines.",
+    "5"
+  )
+  .option(
+    "-B, --Before-value <value>",
+    "Number of lines to be printed before finding target. Default: 5 lines.",
+    "5"
+  )
+  .action((filePath, searchText, opts) => {
+    const fileInteractor: FileInteractor = new FileInteractorImpl();
+    const ui: UI = new UIImpl();
+
+    fileInteractor
+      .findInFile(filePath, searchText)
+      .then((result) => {
+        //Search text not found in file content
+        if (result.lineNumbers.length === 0) {
+          console.log("Text not found.");
+          return;
+        }
+        ui.setUpUIForFindText(
+          result.fileContent,
+          result.lineNumbers,
+          opts.BeforeValue,
+          opts.AfterValue
+        );
+      })
+      .catch((error) => {
+        console.log(`Error occurred: ${error}`);
+      });
+  });
+
 program.parse(process.argv);
