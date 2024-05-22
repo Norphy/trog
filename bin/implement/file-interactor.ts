@@ -11,4 +11,11 @@ export interface FileInteractor {
     filePath: string,
     bufferEncoding: BufferEncoding
   ): Promise<EventEmitter>;
+
+  findInFile(filePath: string, searchText: string): Promise<FindFileObject>;
+}
+
+export interface FindFileObject {
+  lineNumbers: number[];
+  fileContent: string[];
 }
