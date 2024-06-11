@@ -1,3 +1,5 @@
+import { EventEmitter } from "stream";
+
 export interface UI {
   setUpUIForFindText(
     fileContent: string[],
@@ -5,4 +7,6 @@ export interface UI {
     linesBefore: number,
     linesAfter: number
   ): Promise<void>;
+
+  setUpUIForTail(eventEmitter: EventEmitter): Promise<void>;
 }

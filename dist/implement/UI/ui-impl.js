@@ -8,9 +8,22 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 import pkg from "blessed";
-const { screen, box } = pkg;
+const { screen, box, textbox, log } = pkg;
+import chalk from "chalk";
 export class UIImpl {
     constructor() {
+        this.getRegex = (value) => {
+            return RegExp(value, "gi");
+        };
+        this.worksAsRegex = (value) => {
+            try {
+                RegExp(value);
+                return true;
+            }
+            catch (error) {
+                return false;
+            }
+        };
         //Method gets desired above and below lines to print around our find
         this.getTopAndBotLimit = function (currLine, arraySize, maxBefore, maxAfter) {
             const result = [];
@@ -37,6 +50,60 @@ export class UIImpl {
                     fg: "white",
                     border: {
                         fg: "#f0f0f0",
+                    },
+                },
+            });
+        };
+        this.getHighlightTextBox = function () {
+            return textbox({
+                label: " Highlight ",
+                bottom: "0",
+                right: "0",
+                width: "30%",
+                height: "shrink",
+                valign: "middle",
+                inputOnFocus: true,
+                mouse: true,
+                border: {
+                    type: "line",
+                },
+                style: {
+                    fg: "white",
+                    border: {
+                        fg: "default",
+                        bg: "default",
+                    },
+                    focus: {
+                        border: {
+                            fg: "red",
+                        },
+                    },
+                },
+            });
+        };
+        this.getFilterTextBox = function () {
+            return textbox({
+                label: " Filter ",
+                bottom: "0",
+                left: "0",
+                width: "30%",
+                height: "shrink",
+                valign: "middle",
+                inputOnFocus: true,
+                mouse: true,
+                border: {
+                    type: "line",
+                },
+                style: {
+                    fg: "white",
+                    border: {
+                        fg: "default",
+                        bg: "default",
+                    },
+                    focus: {
+                        border: {
+                            fg: "red",
+                        },
                     },
                 },
             });
@@ -150,6 +217,153 @@ export class UIImpl {
             // Focus our element.
             boxWid.focus();
             // Render the screen.
+            screenWid.render();
+        });
+    }
+    setUpUIForTail(eventEmitter) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let filter;
+            let highlight;
+            // Create a screen object.
+            const screenWid = screen({
+                smartCSR: true,
+            });
+            screenWid.title = "Trog Log Analysis";
+            let scrollToBot = false;
+            //Create a box perfectly centered horizontally and vertically.
+            const boxWid = box({
+                scrollable: true,
+                scrollOnInput: true,
+                alwaysScroll: true,
+                top: "0",
+                right: "0",
+                width: "100%",
+                height: "95%",
+                tags: true,
+                keys: true,
+                mouse: true,
+                tag: true,
+                scrollbar: {
+                    ch: " ",
+                    track: {
+                        bg: "yellow",
+                    },
+                    style: {
+                        inverse: true,
+                        fg: "blue",
+                    },
+                },
+                border: {
+                    type: "line",
+                },
+                style: {
+                    fg: "white",
+                    border: {
+                        fg: "#f0f0f0",
+                    },
+                },
+            });
+            const scrollBotBox = box({
+                top: "10%",
+                left: "90%",
+                width: "5%",
+                height: "10%",
+                align: "center",
+                valign: "middle",
+                content: "Scroll\n↓",
+                border: {
+                    type: "line",
+                },
+                style: {
+                    fg: "white",
+                    border: {
+                        fg: "white",
+                    },
+                    focus: {},
+                },
+            });
+            //Highlight text box
+            const highlightTextBoxWid = this.getHighlightTextBox();
+            // //On change to Filter text box, reset the filter text.
+            highlightTextBoxWid.on("set content", () => {
+                highlight = highlightTextBoxWid.content;
+            });
+            //Filter text box
+            const filterTextBoxWid = this.getFilterTextBox();
+            // //On change to Filter text box, reset the filter text.
+            filterTextBoxWid.on("set content", () => {
+                filter = filterTextBoxWid.content;
+            });
+            // Quit on Escape, q, or Control-C.
+            screenWid.key(["escape", "q", "C-c"], function (_, __) {
+                return process.exit(0);
+            });
+            //On pushes to the file, check if filter text is in new text and show it if it does.
+            eventEmitter.on("change", (text) => {
+                if (text.endsWith("\n"))
+                    text = text.slice(0, text.length - 1);
+                let matcherFilter = "";
+                if (filter !== "") {
+                    if (this.worksAsRegex(filter)) {
+                        matcherFilter = this.getRegex(filter);
+                    }
+                    else {
+                        matcherFilter = filter;
+                    }
+                }
+                const matches = typeof matcherFilter === "object"
+                    ? text.match(matcherFilter)
+                    : text.includes(matcherFilter);
+                if (matcherFilter === "" || matches) {
+                    let matcherHighlight;
+                    if (this.worksAsRegex(highlight)) {
+                        matcherHighlight = this.getRegex(highlight);
+                    }
+                    else {
+                        matcherHighlight = highlight;
+                    }
+                    text = text.replace(matcherHighlight, (value) => chalk.bgBlueBright.bold(value));
+                    boxWid.pushLine(text);
+                    if (scrollToBot) {
+                        boxWid.setScrollPerc(100);
+                    }
+                    screenWid.render();
+                }
+            });
+            //Toggle Scroll to bottom with input
+            scrollBotBox.on("click", () => {
+                scrollToBot = !scrollToBot;
+                if (scrollToBot) {
+                    scrollBotBox.style.border.fg = "red";
+                }
+                else {
+                    scrollBotBox.style.border.fg = "white";
+                }
+            });
+            //Properly blur and cancel text boxes when clicking other elements on the screen.
+            boxWid.on("click", () => {
+                filterTextBoxWid.cancel();
+                highlightTextBoxWid.cancel();
+            });
+            scrollBotBox.on("click", () => {
+                filterTextBoxWid.cancel();
+                highlightTextBoxWid.cancel();
+            });
+            highlightTextBoxWid.on("click", () => {
+                screenWid.render();
+                highlightTextBoxWid.cancel();
+                filterTextBoxWid.cancel();
+            });
+            filterTextBoxWid.on("click", () => {
+                screenWid.render();
+                highlightTextBoxWid.cancel();
+                filterTextBoxWid.cancel();
+            });
+            // Append our box to the screen.
+            screenWid.append(boxWid);
+            screenWid.append(scrollBotBox);
+            screenWid.append(filterTextBoxWid);
+            screenWid.append(highlightTextBoxWid);
             screenWid.render();
         });
     }
