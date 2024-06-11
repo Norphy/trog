@@ -9,11 +9,11 @@ TODO
 
 # Usage
 ## tail
-trog tail [options] <file>
+trog tail [options] file
 
 | Argument | Type | Description |
 | --- | --- | --- |
-| <file> | string | path to the file which tail will be performed |
+| file | string | path to the file which tail will be performed |
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -24,12 +24,12 @@ trog tail [options] <file>
 
 ## find
 
-trog find [options] <file> <searchText>
+trog find [options] file searchText
 
 | Argument | Type | Description |
 | --- | --- | --- |
-| <file> | string | path to the file which find will be performed |
-| <searchText> | string | desired text to be found in file |
+| file | string | path to the file which find will be performed |
+| searchText | string | desired text to be found in file |
 
 | Param | Type | Description |
 | --- | --- | --- |
@@ -39,11 +39,11 @@ trog find [options] <file> <searchText>
 
 ## log
 
-trog log [options] <file>
+trog log [options] file
 
 | Argument | Type | Description |
 | --- | --- | --- |
-| <file> | string | path to the file which log will be performed |
+| file | string | path to the file which log will be performed |
 
 | Param | Type | Description |
 | --- | --- | --- |
