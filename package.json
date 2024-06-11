@@ -3,7 +3,7 @@
   "bin": {
     "trog": "./dist/index.js"
   },
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "Log analyzer cli app",
   "main": "index.js",
   "type": "module",

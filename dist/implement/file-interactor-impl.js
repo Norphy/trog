@@ -56,9 +56,9 @@ export class FileInteractorImpl {
         };
     }
     /**
-     * Read the last `n` lines of a file. This is inspired by https://github.com/alexbbt/read-last-lines
-     * @param  {string}   input_file_path - File path to be read
-     * @param  {int}      maxLineCount    - Max number of lines to resad in. (Entire document if n larger than lines in file)
+     * Read the last `n` lines of a file. This is inspired by https://github.com/alexbbt/read-last-lines.
+     * @param  {string}   input_file_path - File path to be read.
+     * @param  {int}      maxLineCount    - Max number of lines to read in. (Entire document if n larger than lines in file).
      * @param  {encoding} encoding        - Specifies the character encoding to be used, or 'buffer'. defaults to 'utf8'.
      *
      * @return {promise}  a promise resolved with the lines or rejected with an error.
@@ -105,18 +105,35 @@ export class FileInteractorImpl {
             throw new Error("Invalid encoding passed as argument.");
         });
     }
-    keepWatchFile(pathToFile, encoding) {
+    /**
+     * This method watches a file for changes and returns an Event Emitter that will the new added part to a File.
+     * @param  {string} pathToFile - path of the file to be watched.
+     * @param  {encoding} encoding - Encoding of the file or the desired encoding of the data to be returned.
+     * @param  {string} filter - Filters the data being returned (Text), will return only that contains filter text.
+     * If blank, returns everything.
+     * @param  {MarkValues} markedValues - Values (Text) that are needed to be marked in color. Contains text to be marked in
+     *  a color and the color it is marked with.
+     * @returns {Promise<EventEmitter>} - Event emitter that will emit text that is added to the file. Keyword for event is "change".
+     */
+    keepWatchFile(pathToFile, encoding, filter, markedValues) {
         return __awaiter(this, void 0, void 0, function* () {
             const eventEmitter = new EventEmitter();
-            fs.watchFile(pathToFile, (curr, prev) => {
-                if (curr.size === prev.size) {
+            let prevFileStat = yield fs.stat(pathToFile);
+            const fsWatcher = fs.watch(pathToFile, (eventType, _) => {
+                //If not change event return
+                if (eventType !== "change")
+                    return;
+                const fileStat = fs.statSync(pathToFile);
+                //If change is not addition ignore
+                if (fileStat.size <= prevFileStat.size) {
                     return;
                 }
                 const fileDesc = fs.openSync(pathToFile, "r");
-                const newBytes = curr.size - prev.size;
-                const bufferNewBytes = Buffer.alloc(newBytes);
-                fs.readSync(fileDesc, bufferNewBytes, 0, newBytes, prev.size);
+                const newBytes = fileStat.size - prevFileStat.size;
                 let result;
+                //Read only the difference in the new characters added to the file
+                const bufferNewBytes = Buffer.alloc(newBytes);
+                fs.readSync(fileDesc, bufferNewBytes, 0, newBytes, prevFileStat.size);
                 if (encoding === "buffer") {
                     result = bufferNewBytes;
                 }
@@ -127,16 +144,40 @@ export class FileInteractorImpl {
                     throw new Error("Invalid encoding passed as option.");
                 }
                 fs.closeSync(fileDesc);
-                eventEmitter.emit(result);
+                //Check filter to return only desired text
+                if (filter !== undefined) {
+                    if (!result.includes(filter))
+                        return;
+                }
+                //Check marked values to mark text that is desired to be marked in a color
+                if (markedValues !== undefined) {
+                    for (const markedValue of markedValues) {
+                        const index = result.indexOf(markedValue.value);
+                        const value = markedValue.value;
+                        const color = markedValue.color;
+                        if (index !== -1) {
+                            result = result.replace(value, color(value));
+                        }
+                    }
+                }
+                prevFileStat = fileStat;
+                eventEmitter.emit("change", result);
             });
             // catches ctrl+c event
             process.on("SIGINT", () => {
-                fs.unwatchFile(pathToFile);
                 eventEmitter.removeAllListeners("change");
+                fsWatcher.close();
             });
             return eventEmitter;
         });
     }
+    /**
+     * This method finds certain text in a file (All occurances of text).
+     * @param {string} filePath - Is the path to the file.
+     * @param {string} searchText - Is text that is desired to be found
+     * @returns {Promise<FindFileObject>} - returns a object that contains the line number of the text occurance
+     * and the line containing the text occurance.
+     */
     findInFile(filePath, searchText) {
         return __awaiter(this, void 0, void 0, function* () {
             return yield this.getText(filePath, searchText);

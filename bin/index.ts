@@ -4,10 +4,8 @@ import { program } from "commander";
 import { FileInteractor } from "./implement/file-interactor.js";
 import { FileInteractorImpl } from "./implement/file-interactor-impl.js";
 
-import pkg from "blessed";
 import { UI } from "./implement/UI/ui.js";
 import { UIImpl } from "./implement/UI/ui-impl.js";
-const { screen, box, log } = pkg;
 
 program.version("0.0.1").description("Log Analyzer Cli App");
 
@@ -56,7 +54,6 @@ program
   .description("Reads bottom N lines of a file (Contains follow option).")
   .argument("<file>", "File path of the file to search for text.")
   .argument("<searchText>", "Text which we would like to find in the file.")
-  // .argument("<file>", "File path of the file to search for text.")
   .option(
     "-A, --After-value <value>",
     "Number of lines to be printed after finding target. Default: 5 lines.",
@@ -89,6 +86,25 @@ program
       .catch((error) => {
         console.log(`Error occurred: ${error}`);
       });
+  });
+
+program
+  .command("log")
+  .description("Watches a file for changes.")
+  .argument("<file>", "File path of the file of which to log changes")
+  .option("-e, --encoding <value>", "Encoding of file. Deafult: utf8.", "utf8")
+  .action((filePath, opts) => {
+    const fileInteractor: FileInteractor = new FileInteractorImpl();
+    const ui: UI = new UIImpl();
+      fileInteractor
+        .keepWatchFile(filePath, opts.encoding)
+        .then((eventEmitter) => {
+          return ui.setUpUIForTail(eventEmitter);
+        })
+        .then(() => {})
+        .catch((error) => {
+          console.log(`Error occured: ${error}`);
+        });
   });
 
 program.parse(process.argv);
