@@ -1,5 +1,5 @@
 {
-  "name": "trog",
+  "name": "trog-cli",
   "bin": {
     "trog": "./dist/index.js"
   },
