@@ -1,10 +1,13 @@
 # trog
 
 Log Analyzer CLI App
+<div align="center">
 
-![trog-log-demo](/asset/Trog_Log.gif)
-![trog-find-demo](/asset/Trog_Find.gif)
-![trog-tail-demo](/asset/Trog_Tail.gif)
+![trog-log-demo](/assets/Trog_Log.gif)
+![trog-find-demo](/assets/Trog_Find.gif)
+![trog-tail-demo](/assets/Trog_Tail.gif)
+
+</div>
 
 # Install
 npm i trog-cli
