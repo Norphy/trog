@@ -3,7 +3,7 @@
   "bin": {
     "trog": "./dist/index.js"
   },
-  "version": "0.0.4",
+  "version": "0.0.5",
   "description": "Log analyzer cli app",
   "main": "index.js",
   "type": "module",
@@ -14,6 +14,10 @@
   "keywords": [
     "trog"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Norphy/trog.git"
+  },
   "author": "Omar Orphy",
   "license": "ISC",
   "dependencies": {
