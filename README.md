@@ -2,10 +2,12 @@
 
 Log Analyzer CLI App
 
-TODO: GIF
+![trog-log-demo](/asset/Trog_Log.gif)
+![trog-find-demo](/asset/Trog_Find.gif)
+![trog-tail-demo](/asset/Trog_Tail.gif)
 
 # Install
-TODO
+npm i trog-cli
 
 # Usage
 ## tail
@@ -22,6 +24,8 @@ trog tail [options] file
 | -f, --follow | null | Follow file for any additions. Default: false |
 | -h or --help | null | Display help |
 
+Description: Similar to normal tail. Tail a file.
+
 ## find
 
 trog find [options] file searchText
@@ -37,6 +41,9 @@ trog find [options] file searchText
 | -B, --Before-value <value> | string | number of lines to print after occurance of desired find. Default: 5 |
 | -h or --help | null | Display help |
 
+Description: Opens interactive window with all the finds in a file. User can jump between next and previous using
+'n' and 'p' keys and scroll up and down.
+
 ## log
 
 trog log [options] file
@@ -49,3 +56,6 @@ trog log [options] file
 | --- | --- | --- |
 | -e, --encoding <value> | string | encooding of text to print. Default: utf8|
 | -h or --help | null | Display help |
+
+Description: Interactive view of watching any changes to file with Filter and Highlight.
+Filter and Highlight accept REGEX.
